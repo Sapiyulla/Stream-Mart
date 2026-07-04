@@ -19,6 +19,17 @@ services:
     ports:
       - "9092:9092"
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: streammart-kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: streammart
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8082:8080"
+    depends_on:
+      - kafka
+
   # ========== Storage ==========
   minio:
     image: minio/minio:RELEASE.2025-06-13T11-33-47Z
@@ -53,6 +64,8 @@ services:
       SPARK_MASTER_HOST: spark-master
       SPARK_LOG_DIR: /tmp/spark-logs
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    volumes:
+      - ./spark/jobs:/opt/spark/jobs
     ports:
       - "8080:8080"
       - "7077:7077"
@@ -64,6 +77,8 @@ services:
       SPARK_MASTER_URL: spark://spark-master:7077
       SPARK_WORKER_DIR: /tmp/spark-work
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    volumes:
+      - ./spark/jobs:/opt/spark/jobs
     depends_on:
       - spark-master
 

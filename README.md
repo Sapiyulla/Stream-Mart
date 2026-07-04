@@ -33,8 +33,12 @@ Grafana          | grafana/grafana:11.3.0
 > Чтобы развернуть локально на хосте должен быть установлен **Docker (Compose)**.
 
 ### Развернуть локально
-> **В корне проекта!**
 
 ```shell
 docker compose up -d
+```
+ или
+
+```shell
+make start #рекомендуется
 ```
