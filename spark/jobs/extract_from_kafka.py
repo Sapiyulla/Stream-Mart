@@ -1,4 +1,5 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import to_date, col, current_date
 
 spark = SparkSession.builder \
     .appName('KafkaStreaming_Extract') \
@@ -14,19 +15,42 @@ spark = SparkSession.builder \
     .master("spark://spark-master:7077") \
     .getOrCreate()
     
+    
+# set only WARN and ERROR logs (ONLY FOR DEVELOP!)
+spark.sparkContext.setLogLevel('WARN')
+    
+
+def write_to_MinIO(batch_df: DataFrame, batch_id: int):
+    if batch_df.count() == 0:
+        return
+        
+    batch_df.write \
+        .mode('append') \
+        .format('parquet') \
+        .partitionBy('topic', 'date') \
+        .option('compression', 'snappy') \
+        .save('s3a://streammart/raw')
+
+    
+# connect to Kafka topic
 df = spark.readStream \
     .format('kafka') \
     .option('kafka.bootstrap.servers', 'kafka:9092') \
     .option('subscribe', 'test_item_liked') \
     .load()
 
-
-query = df.writeStream \
-    .format('parquet') \
-    .outputMode('append') \
-    .option('path', 's3a://streammart/raw') \
-    .option("checkpointLocation", "s3a://meta/checkpoints") \
-    .trigger(processingTime="10 seconds") \
-    .start()
+# processing DataFrame
+if 'timestamp' in df.columns:
+    df = df.withColumn('date', to_date(col('timestamp')))
+else:
+    df = df.withColumn('date', current_date())
     
+# save to MinIO with use writeStream from Spark
+query = df.writeStream \
+    .outputMode('append') \
+    .foreachBatch(write_to_MinIO) \
+    .option('checkpointLocation', 's3a://meta/checkpoints') \
+    .trigger(processingTime='10 seconds') \
+    .start()
+
 query.awaitTermination()

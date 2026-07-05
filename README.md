@@ -8,7 +8,7 @@
 -|-
 Python           | python:3.11
 Apache Kafka     | apache/kafka:3.9.0
-MinIO            | minio/minio:RELEASE.2024-11-07T00-00-00Z
+MinIO            | quay.io/vakamo/minio-cicd:2025-12-01
 PostgreSQL       | postgres:16.2-alpine
 Spark            | spark:3.5.3
 Apache Airflow   | apache/airflow:2.10.2-python3.11
@@ -41,4 +41,16 @@ docker compose up -d
 
 ```shell
 make start #рекомендуется
+```
+
+### Просмотреть статусы
+
+```shell
+make status
+```
+
+### Spark Stream run
+
+```shell
+make spark-run
 ```
