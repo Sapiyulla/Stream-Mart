@@ -6,7 +6,7 @@
 
 Технология       | Версия/Образ
 -|-
-Python           | python:3.11
+Python           | python:3.11 (slim)
 Apache Kafka     | apache/kafka:3.9.0
 MinIO            | quay.io/vakamo/minio-cicd:2025-12-01
 PostgreSQL       | postgres:16.2-alpine

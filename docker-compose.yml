@@ -18,6 +18,14 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
+      
+  generator:
+    container_name: generator
+    build:
+      context: generator
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

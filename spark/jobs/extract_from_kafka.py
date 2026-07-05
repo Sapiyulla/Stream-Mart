@@ -1,5 +1,21 @@
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import to_date, col, current_date
+from pyspark.sql.functions import to_date, col, current_date, from_json
+from pyspark.sql.types import StructType, StructField, StringType, FloatType, IntegerType
+
+schema = StructType([
+    StructField("event_id", StringType()),
+    StructField("event_type", StringType()),
+    StructField("timestamp", StringType()),
+    StructField("payload", StructType([
+        StructField("user_id", IntegerType()),
+        StructField("item_id", IntegerType()),
+        StructField("category", StringType()),
+        StructField("price", FloatType()),
+        StructField("quantity", IntegerType()),
+        StructField("rating", IntegerType()),
+        StructField("reason", StringType()),
+    ])),
+])
 
 spark = SparkSession.builder \
     .appName('KafkaStreaming_Extract') \
@@ -29,6 +45,7 @@ def write_to_MinIO(batch_df: DataFrame, batch_id: int):
         .format('parquet') \
         .partitionBy('topic', 'date') \
         .option('compression', 'snappy') \
+        .option('maxRecordsPerFile', 1000) \
         .save('s3a://streammart/raw')
 
     
@@ -36,8 +53,10 @@ def write_to_MinIO(batch_df: DataFrame, batch_id: int):
 df = spark.readStream \
     .format('kafka') \
     .option('kafka.bootstrap.servers', 'kafka:9092') \
-    .option('subscribe', 'test_item_liked') \
-    .load()
+    .option("subscribePattern", "item_.*") \
+    .load() \
+    .select(from_json(col("value").cast("string"), schema).alias("data"), col("topic")) \
+    .select("data.*", "topic")
 
 # processing DataFrame
 if 'timestamp' in df.columns:
