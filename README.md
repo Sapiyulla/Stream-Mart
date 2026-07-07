@@ -6,15 +6,15 @@
 
 Технология       | Версия/Образ
 -|-
-Python           | python:3.11 (slim)
-Apache Kafka     | apache/kafka:3.9.0
-MinIO            | quay.io/vakamo/minio-cicd:2025-12-01
-PostgreSQL       | postgres:16.2-alpine
-Spark            | spark:3.5.3
-Apache Airflow   | apache/airflow:2.10.2-python3.11
-dbt              | 1.9.0
-Prometheus       | prom/prometheus:v2.55.0
-Grafana          | grafana/grafana:11.3.0
+Python           | `python:3.11 (slim)`
+Apache Kafka     | `apache/kafka:3.9.0`
+MinIO            | `quay.io/vakamo/minio-cicd:2025-12-01`
+PostgreSQL       | `postgres:16.2-alpine`, `postgres:13-alpine`
+Spark            | `spark:3.5.3`
+Apache Airflow   | `apache/airflow:2.10.2-python3.11`
+dbt              | `1.9.0`
+Prometheus       | `prom/prometheus:v2.55.0`
+Grafana          | `grafana/grafana:11.3.0`
 
 ## Архитектура
 
@@ -41,12 +41,6 @@ docker compose up -d
 
 ```shell
 make start #рекомендуется
-```
-
-### Просмотреть статусы
-
-```shell
-make status
 ```
 
 ### Spark Stream run
