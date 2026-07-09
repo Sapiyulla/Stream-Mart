@@ -58,7 +58,7 @@ services:
       POSTGRES_PASSWORD: streammart
       POSTGRES_DB: streammart
     volumes:
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./dwh/init.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "5432:5432"
 
@@ -105,9 +105,12 @@ services:
     environment:
       SPARK_MASTER_HOST: spark-master
       SPARK_LOG_DIR: /tmp/spark-logs
+      SPARK_CONF_DIR: /opt/spark/conf
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     volumes:
       - ./spark/jobs:/opt/spark/jobs
+      - ./spark/conf:/opt/spark/conf
+      - ./spark/sql:/opt/spark/sql
     ports:
       - "8080:8080"
       - "7077:7077"
@@ -120,11 +123,32 @@ services:
     environment:
       SPARK_MASTER_URL: spark://spark-master:7077
       SPARK_WORKER_DIR: /tmp/spark-work
+      SPARK_CONF_DIR: /opt/spark/conf
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     volumes:
       - ./spark/jobs:/opt/spark/jobs
+      - ./spark/conf:/opt/spark/conf
+      - ./spark/sql:/opt/spark/sql
     depends_on:
       - spark-master
+    
+  spark_hive-init:
+    build:
+      context: spark
+      dockerfile: Dockerfile
+    container_name: spark_hive-init
+    environment:
+      SPARK_CONF_DIR: /opt/spark/conf
+    entrypoint: ["/opt/spark/scripts/hive_init.sh"]
+    volumes:
+      - ./spark/conf:/opt/spark/conf
+      - ./spark/scripts/sql/hive_init.sql:/opt/spark/sql/hive_init.sql
+      - ./spark/scripts/bash/hive_init.sh:/opt/spark/scripts/hive_init.sh
+    depends_on:
+      hive_metastore:
+        condition: service_started
+      pg_hive_metastore:
+        condition: service_healthy
 
   # ========== Orchestration ==========
   airflow-webserver:

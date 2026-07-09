@@ -19,12 +19,6 @@ schema = StructType([
 
 spark = SparkSession.builder \
     .appName('KafkaStreaming_Extract') \
-    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-    .config("spark.sql.catalogImplementation", "hive") \
-    .config("spark.sql.hive.metastore.version", "2.3.9") \
-    .config("spark.sql.hive.metastore.jars", "builtin") \
-    .config("spark.sql.adaptive.enabled", "true") \
     .enableHiveSupport() \
     .master("spark://spark-master:7077") \
     .getOrCreate()
@@ -40,31 +34,7 @@ except Exception as e:
     print("Проверьте, что Hive Metastore запущен и доступен")
 
 # Создаем базу данных
-spark.sql("CREATE DATABASE IF NOT EXISTS raw")
 spark.sql("USE raw")
-
-# Создаем таблицу если не существует
-spark.sql("""
-    CREATE TABLE IF NOT EXISTS events (
-        event_id STRING,
-        event_type STRING,
-        timestamp STRING,
-        payload STRUCT<
-            user_id: INT,
-            item_id: INT,
-            category: STRING,
-            price: FLOAT,
-            quantity: INT,
-            rating: INT,
-            reason: STRING
-        >,
-        topic STRING,
-        date DATE
-    )
-    USING DELTA
-    PARTITIONED BY (topic, date)
-    LOCATION 's3a://streammart/raw/events'
-""")
 
 def write_to_MinIO(batch_df: DataFrame, batch_id: int):
     
